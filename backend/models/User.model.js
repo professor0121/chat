@@ -8,31 +8,33 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  mobile: {
-    type: Number,
+
+  email: {
+    type: String,
     required: true,
     unique: true,
+    match: [/\S+@\S+\.\S+/, 'Please use a valid email address'],
   },
+
+
   password: {
     type: String,
     required: true,
   },
 });
 
-// 💫 Password Hash Middleware
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  console.log("🔐 Password hashed:", this.password);
   next();
 });
 
-// 🧠 FIXED: Use function() to access 'this' properly
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+  userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+  };
 
-// 🔐 FIXED: Again, function() is important to access 'this._id'
 userSchema.methods.generateAuthToken = function () {
   const token = jwt.sign(
     { userId: this._id },
